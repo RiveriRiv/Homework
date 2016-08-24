@@ -1,0 +1,97 @@
+package com.javarush.test.level20.lesson10.bonus01;
+
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+
+/* Алгоритмы-числа
+Число S состоит из M чисел, например, S=370 и M(количество цифр)=3
+Реализовать логику метода getNumbers, который должен среди натуральных чисел меньше N (long)
+находить все числа, удовлетворяющие следующему критерию:
+число S равно сумме его цифр, возведенных в M степень
+getNumbers должен возвращать все такие числа в порядке возрастания
+
+Пример искомого числа:
+370 = 3*3*3 + 7*7*7 + 0*0*0
+8208 = 8*8*8*8 + 2*2*2*2 + 0*0*0*0 + 8*8*8*8
+
+На выполнение дается 10 секунд и 50 МБ памяти.
+*/
+public class Solution {
+    public static int[] getNumbers(int N) {
+        int[] result = null;
+        ArrayList<Integer> list = new ArrayList<Integer>();
+        for (int i = 1; i <=N ; i++) {
+            int degree = getDegree(i); /*Получаем количество цифр в числе(степень)*/
+            int num = 0;
+            int k;
+            int input = i;
+            if (getNum(i, degree)) { /*Если в числе любая цифра не меньше предыдущей и не больше последующей, либо равна нулю*/
+                do {                 /*Вычисляем сумму цифр, возведенных в нужно степень*/
+                    k = input % 10;
+                    num += pow(k, degree);
+                } while ((input = input / 10) > 0);
+                if (list.contains(num)) continue;
+
+                int sum = 0;
+                int input2 = num;
+                int s;
+                int o = getDegree(num); /*Количество цифр полученного числа num*/
+
+                if ( o == degree ) { /*Условие выполняется, если количество цифр числа num, равно количеству цифр числа i*/
+                    do {             /*Вычисляется новое число, состоящее из суммы цифр числа num, возведенных в нужную степень*/
+                        s = input2 % 10;
+                        sum += pow(s, getDegree(num));
+                    } while ((input2 /= 10) > 0);
+
+                    if (num == sum) {
+                        list.add(num);
+                    }
+                    if (num == N) break;
+                }
+            }
+        }
+        result = new int[list.size()]; /*Заполняем массив*/
+        for (int i = 0; i < list.size(); i++) {
+            result[i] = list.get(i);
+        }
+        Arrays.sort(result); /*Сортируем массив*/
+        return result;
+    }
+
+    /*Метод, возвращающий количество цифр*/
+    public static int getDegree(int i) {
+        int degree = 0;
+        do {
+            degree++;
+        } while ((i/=10)>0);
+        return degree;
+    }
+
+    /*Метод, возвращающает true, если в числе любая цифра не меньше предыдущей и не больше последующей, либо равна нулю*/
+    public static boolean getNum(int num, int degree) {
+        int [] s = new int[degree];
+        int input = num;
+        boolean e = true;
+        for (int i = s.length - 1; i >= 0; i--) {
+            s[i] = input%10;
+            input = input/10;
+        }
+        for (int i = 0; i < s.length-1; i++) {
+            if ((s[i]!=0)&&(s[i]>s[i+1])) e = false; else e=true;
+        }
+        return e;
+    }
+
+    /*Метод возводит число в степень*/
+    public static int pow(int a, int n) {
+        if (n == 0) return 1;
+        if (n % 2 == 0) {
+            int ans = pow(a, n / 2);
+            return ans * ans;
+        } else {
+            return a * pow(a, n - 1);
+        }
+    }
+}
