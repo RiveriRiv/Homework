@@ -1,0 +1,118 @@
+At=Struct.new(:al, :bl, :a, :b) do
+	def initialize(*args)
+    	super
+       self.b ||= self.a
+    end
+
+    def -@ 
+        At.new(al, bl, -a, -b) 
+    end
+
+    def positive?
+        if self.a >= 0 && self.b >= 0 
+		    return true
+	    end
+    end
+
+    def negative?
+	    if self.a < 0 && self.b<0 
+		    return true
+	    end
+    end
+	 
+    def +(other) #Сумма трапецевдиных нечетких интервалов/ треугольных нечетких чисел
+        At.new(
+            self.al + other.al,
+            self.bl + other.bl,
+            self.a + other.a,
+            self.b + other.b
+        )
+    end
+
+    def -(other) #Разность
+        At.new(
+            self.al + other.al,
+            self.bl + other.bl,
+            self.a - other.a,
+            self.b - other.b
+        )
+    end
+
+    
+    def *(other) #Умножение
+    	if [self, other].all?(&:positive?)  #если все вершины положительные
+            At.new(
+                self.a * other.al + other.a * self.al,
+                self.b * other.bl + other.b * self.bl,
+                self.a * other.a,
+                self.b * other.b
+            )
+        elsif [self, other].all?(&:negative?)  #если все вершины отрицательные
+    	    -self * -other
+        elsif self.negative? && other.positive? #если вершины первого числа отрицательные, а второго - положительные
+            -(-self * other)
+         elsif self.positive? && other.negative? #если вершины первого числа положительные, а второго - отрицательные
+    	    -(self * -other)
+        end
+    end
+    
+    def /(other) #Деление
+    if [self, other].all?(&:positive?)	#если все вершины положительные
+        At.new(
+            ((self.a * other.bl + other.b * self.al) / (other.b**2)).round(2),
+            ((self.b * other.al + other.a * self.bl) / (other.a**2)).round(2),
+            (self.a / other.b).round(2),
+            (self.b / other.a).round(2)
+        ) 
+    elsif [self, other].all?(&:negative?) #если все вершины отрицательные
+    	    -self / -other
+    elsif self.negative? && other.positive? #если вершины первого числа отрицательные, а второго - положительные
+            -(-self / other)
+    elsif self.positive? && other.negative? #если вершины первого числа положительные, а второго - отрицательные
+    	    -(self / -other)
+    end
+    end
+end
+ 
+alph = At.new(1.0, 2.0, -7.0, -6.0)
+blph = At.new(1.0, 3.0, 4.0, 5.0)
+
+alph2 = At.new(1.0, 2.0, 7.0, 6.0)
+blph2 = At.new(1.0, 3.0, 4.0, 5.0)
+
+alph3 = At.new(1.0, 2.0, -7.0, -6.0)
+blph3 = At.new(1.0, 3.0, -5.0, -4.0)
+
+alph4 = At.new(1.0, 2.0, 7.0, 6.0)
+blph4 = At.new(1.0, 3.0, -5.0, -4.0)
+
+alph5 = At.new(10.0, 20.0, -63.0)
+blph5 = At.new(13.0, 23.0, 40.0)
+
+alph6 = At.new(27, 5.0, 46.0, 89.0)
+blph6 = At.new(28.0, 67.0, 90.0)
+
+alph7 = At.new(34.6, 48.4, -80.5)
+blph7 = At.new(15.0, 35.0, -58.5)
+
+alph8 = At.new(11, 22.0, 77.0)
+blph8 = At.new(58.0, 97.0, -100.0)
+ 
+def summ(alph,blph)
+  (clph = alph + blph)
+end
+#p "a=#{clph[:a]}, b=#{clph[:b]}, al=#{clph[:al]}, bl=#{clph[:bl]}"
+def rasn(alph,blph)
+ clph = alph - blph
+end
+
+#p "a=#{clph[:a]}, b=#{clph[:b]}, al=#{clph[:al]}, bl=#{clph[:bl]}"
+def umn(alph,blph)
+  clph = alph * blph
+end
+#p "a=#{clph[:a]}, b=#{clph[:b]}, al=#{clph[:al]}, bl=#{clph[:bl]}"
+def del(alph,blph)
+ clph = alph / blph
+end
+#p "a=#{clph[:a]}, b=#{clph[:b]}, al=#{clph[:al]}, bl=#{clph[:bl]}"
+
