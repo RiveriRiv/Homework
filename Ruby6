@@ -1,0 +1,158 @@
+# Лабораторная работа Ufuz-06
+# Нечеткие логические операции
+# Автор: Совкова Дарья
+class Parser
+  def initialize(str, set_b, operation, set_c)
+    #выбор операции
+    (["maxmin","alg","gran","drast"].include?(operation)) ? nil : (return (puts "\nНеправильная операция"; puts)) 
+    
+    str=str.split(' ').map{|a| (set_b.has_key?(a)) ? a=set_b[a] : a}
+     #Если символ в строке является ключом хэша, то он заменяется на значение ключа 
+    stack=[]
+    #puts str.inspect
+    (str.length<=0) ? (return (puts "Ошибка в строке"; puts)) : nil #Пустая строка
+    str.reverse.each{|a|
+      if ((a=="~") && (stack.length<1)) || ((["&","v","->","<=>"].include?(a)) && (stack.length<2))
+        #длина не должна быть меньше 1, если инверсия; для остальных операций - меньше 2; проверка идет с конца строки 
+        return (puts "Ошибка в строке"; puts)
+      else
+      case a
+
+         when "~" #Инверсия(отрицание)
+           stack[-1]=1.0-stack[-1]
+
+         when "v" #Дизъюнкция
+           case (operation)
+             when "maxmin" #максиминная
+               stack << [stack.slice!(-1),stack.slice!(-1)].max
+             when "alg" #алгебраическая
+               a=stack.slice!(-1)
+               b=stack.slice!(-1)
+               stack << (a+b)-a*b
+             when "gran" #граничная
+               stack << [stack.slice!(-1)+stack.slice!(-1), 1.0].min
+             when "drast" #драстическая
+               a=stack.slice!(-1)
+               b=stack.slice!(-1)
+               if a==0.0
+		              stack << b
+		              elsif b==0.0
+		                  stack << a
+		              else
+		                  stack << 1.0
+		           end
+            end
+
+         when "&" #Конъюнкция
+           case (operation)
+             when "maxmin"
+               stack << [stack.slice!(-1),stack.slice!(-1)].min
+             when "alg"
+               stack << stack.slice!(-1)*stack.slice!(-1)
+             when "gran"
+               stack << [stack.slice!(-1)+stack.slice!(-1)-1, 0.0].max
+             when "drast"
+               a=stack.slice!(-1)
+               b=stack.slice!(-1)
+               if a==1.0
+		              stack << b
+		              elsif b==1.0
+		                  stack << a
+		              else
+		                  stack << 0.0
+		           end
+            end
+
+        when "<=>" #эквиваленция (A & B)v(~A & ~B)
+           a=stack.slice!(-1)
+           b=stack.slice!(-1)
+           stack << [[a, b].min, [1.0-a, 1.0-b].min].max
+
+        when "->" #импликация  ~A v B
+           case (operation)
+             when "maxmin"
+               stack << [1-stack.slice!(-1), stack.slice!(-1)].max
+             when "alg"
+               a=stack.slice!(-1)
+               stack << [1-a, a*stack.slice!(-1)].max
+             when "gran"
+               stack << [1-stack.slice!(-1)+stack.slice!(-1), 1.0].min
+             when "drast"
+               a=stack.slice!(-1)
+               b=stack.slice!(-1)
+               if a<=b
+		              stack << 1.0
+		           else
+		              stack << b
+		           end
+            end
+      else
+           stack << a
+      end
+      end
+    }
+  testa(stack.inspect, set_c)
+  end
+end
+
+def testa(set_func, a)
+   puts "\n(1) #{set_func.to_s}"
+   puts "(2) #{a}"
+   puts ""
+   puts "Ожидаемый результат (2) соответствует полученному (1)?"
+   set_func.to_s==a ? (return (puts "true")) : (return (puts "false"))
+end
+
+puts "--------------------------"
+puts "Максиминные операции:"
+puts "--------------------------"
+puts "\nДля CvA&~B при A=>0.5, B=>0.2, C=>0.6\n"
+test_11=Parser.new("v C & A ~ B", {"A"=>0.5, "B"=>0.2, "C"=>0.6},"maxmin", "[0.6]")
+
+puts "\nДля (~A&B)v(A&~B) при A=>1.0, B=>0.6\n"
+test_21=Parser.new("v & ~ A B & A ~ B", {"A"=>1.0, "B"=>0.6},"maxmin", "[0.4]")
+
+puts "\nДля (A->(B<=>C))<=>(A&C) при A=>0.2, B=>0.9, C=>0.3\n"
+test_31=Parser.new("<=> -> A <=> B C & A C", {"A"=>0.2, "B"=>0.9, "C"=>0.3},"maxmin", "[0.2]")
+puts
+puts "--------------------------"
+puts "Алгебраические операции:"
+puts "--------------------------"
+puts "\nДля CvA&~B при A=>0.5, B=>0.2, C=>0.6\n"
+test_12=Parser.new("v C & A ~ B", {"A"=>0.5, "B"=>0.2, "C"=>0.6},"alg", "[0.76]")
+
+puts "\nДля (~A&B)v(A&~B) при A=>1.0, B=>0.6\n"
+test_22=Parser.new("v & ~ A B & A ~ B", {"A"=>1.0, "B"=>0.6},"alg", "[0.4]")
+
+puts "\nДля (A->(B<=>C))<=>(A&C) при A=>0.2, B=>0.9, C=>0.3\n"
+test_32=Parser.new("<=> -> A <=> B C & A C", {"A"=>0.2, "B"=>0.9, "C"=>0.3},"alg", "[0.19999999999999996]")
+puts
+puts "--------------------------"
+puts "Граничные операции:"
+puts "--------------------------"
+puts "\nДля CvA&~B при A=>0.5, B=>0.2, C=>0.6\n"
+test_13=Parser.new("v C & A ~ B", {"A"=>0.5, "B"=>0.2, "C"=>0.6},"gran", "[0.9]")
+
+puts "\nДля (~A&B)v(A&~B) при A=>1.0, B=>0.6\n"
+test_23=Parser.new("v & ~ A B & A ~ B", {"A"=>1.0, "B"=>0.6},"gran", "[0.3999999999999999]")
+
+puts "\nДля (A->(B<=>C))<=>(A&C) при A=>0.2, B=>0.9, C=>0.3\n"
+test_33=Parser.new("<=> -> A <=> B C & A C", {"A"=>0.2, "B"=>0.9, "C"=>0.3},"gran", "[0.0]")
+puts
+puts "--------------------------"
+puts "Драстические операции:"
+puts "--------------------------"
+puts "\nДля CvA&~B при A=>0.5, B=>0.2, C=>0.6"
+test_14=Parser.new("v C & A ~ B", {"A"=>0.5, "B"=>0.2, "C"=>0.6},"drast", "[0.6]")
+
+puts "\nДля (~A&B)v(A&~B) при A=>1.0, B=>0.6\n"
+test_24=Parser.new("v & ~ A B & A ~ B", {"A"=>1.0, "B"=>0.6},"drast", "[0.4]")
+
+puts "\nДля (A->(B<=>C))<=>(A&C) при A=>0.2, B=>0.9, C=>0.3\n"
+test_34=Parser.new("<=> -> A <=> B C & A C", {"A"=>0.2, "B"=>0.9, "C"=>0.3},"drast", "[0.0]")
+puts
+puts "------------------"
+puts "Ошибка"
+puts "------------------"
+puts "\nДля (A->(B<=>C))<=>(A&C) при A=>0.2, B=>0.9, C=>0.3\n"
+test_4=Parser.new("<=> -> A <=> B C & A C", {"A"=>0.2, "B"=>0.9, "C"=>0.3},"sim", "Неправильная операция")
